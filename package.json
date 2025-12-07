@@ -1,0 +1,21 @@
+{
+  "name": "project-management-project",
+  "version": "1.0.0",
+  "description": "A project from the course, related to backend where we will create RestFull APIs",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "backend",
+    "API",
+    "creation",
+    "course"
+  ],
+  "author": "Himanshu choyal",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "3.7.4"
+  }
+}
