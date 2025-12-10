@@ -1,7 +1,5 @@
 import { body } from "express-validator";
 const userRegisterValidator = () => {
-  console.log("validating");
-
   return [
     body("email")
       .trim()
@@ -27,8 +25,10 @@ const userLoginValidator = () => {
   return [
     body("email")
       .trim()
-      .notEmpty().withMessage("Email is required")
-      .isEmail().withMessage("Email is not valid"),
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Email is not valid"),
     body("username")
       .trim()
       .notEmpty()
@@ -44,4 +44,53 @@ const userLoginValidator = () => {
   ];
 };
 
-export { userRegisterValidator,userLoginValidator };
+const userChangeCurrentPasswordValidator = () => {
+  return [
+    body("oldPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("Old Password is required"),
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("new Password is required")
+      .isLength({ min: 6 })
+      .withMessage("New Password must be at least 6 charecters long"),
+  ];
+};
+
+const userForgotPasswordValidator = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Email is invalid"),
+    // body("newPassword")
+    //   .trim()
+    //   .notEmpty()
+    //   .withMessage("new Password is required")
+    //   .isLength({ min: 6 })
+    //   .withMessage("New Password must be at least 6 charecters long"),
+  ];
+};
+
+const userRestForgotPasswordValidator = () => {
+  return [
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("new Password is required")
+      .isLength({ min: 6 })
+      .withMessage("New Password must be at least 6 charecters long"),
+  ];
+};
+
+export {
+  userRegisterValidator,
+  userLoginValidator,
+  userChangeCurrentPasswordValidator,
+  userForgotPasswordValidator,
+  userRestForgotPasswordValidator
+};
