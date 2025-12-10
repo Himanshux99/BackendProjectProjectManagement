@@ -75,6 +75,8 @@ userSchema.pre("save", async function () {
 //   }
 // });
 
+//Sometimes it make more sence if the schema has the methods rather then the controller
+//this is a way to write methods
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
@@ -108,12 +110,12 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 userSchema.methods.generateTemoporaryToken = function () {
-  const unHashedToken = crypto.randomBytes(20).toString("hex");
+  const unHashedToken = crypto.randomBytes(20).toString("hex"); //random char string
 
   const hashedToken = crypto
     .createHash("sha256")
     .update(unHashedToken)
-    .digest("hex");
+    .digest("hex"); //hashed string
 
   const tokenExpiry = Date.now() + 20 * 60 * 1000; //20 min
   return { unHashedToken, hashedToken, tokenExpiry };

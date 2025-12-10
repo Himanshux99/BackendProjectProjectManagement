@@ -29,12 +29,14 @@ const generateAccessAndRefreshToken = async (userId) => {
     );
   }
 };
+
+//Post
 const registerUser = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
+  const { email, username, password } = req.body;
 
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
-  }); // It finds a document in the DB with either of the given field and return a Documnet
+  }); // It finds a document in the DB with either of the given field and return a Document
 
   if (existedUser) {
     throw new ApiError(
@@ -45,12 +47,11 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
-    email,
-    password,
-    username,
-    role,
+    email, // email : email
+    password, // password : password
+    username, // username : username
     isEmailVarified: false,
-  }); //Create a document in the DB and also return the smongoose object
+  }); //Create a document in the DB and also return the mongoose object
 
   const { unHashedToken, hashedToken, tokenExpiry } =
     user.generateTemoporaryToken(); //Genereated the tokens using Schema Methods
@@ -59,6 +60,7 @@ const registerUser = asyncHandler(async (req, res) => {
   user.emailVarificationExpiry = tokenExpiry;
   await user.save();
 
+  //user?.email -> this means return email if exist if not return "undeifned" not null or error
   await sendEmail({
     email: user?.email,
     subject: "Please Varify your Email",
@@ -68,6 +70,7 @@ const registerUser = asyncHandler(async (req, res) => {
     ),
   });
 
+  //get user document wothout the fields password refreshToken and so on
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken -emailVarificationToken -emailVarificationExpiry",
   );
@@ -86,8 +89,10 @@ const registerUser = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+//Post
 const login = asyncHandler(async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password } = req.body;
 
   if (!email) {
     throw new ApiError(400, "Email is required");
@@ -105,9 +110,8 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Incorrect Password Or Email");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    user._id,
-  );
+  const { accessToken, refreshToken } = 
+    await generateAccessAndRefreshToken(user._id);
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken -emailVarificationToken -emailVarificationExpiry",
@@ -134,6 +138,8 @@ const login = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+//Get
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
@@ -158,17 +164,23 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out"));
 });
+
+//Get
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, req.user, "Current user fetched Successfully"));
 });
+
+//Get
+// We get a Get req which has a token  we need to verify that this token is same as we have in our DB
 const verifyEmail = asyncHandler(async (req, res) => {
   const { varificationToken } = req.params;
   if (!varificationToken) {
     throw new ApiError(401, "Varification token missing");
   }
 
+  //Hashing as we have Hashed vesion in DB
   const hashedToken = crypto
     .createHash("sha256")
     .update(varificationToken)
@@ -176,7 +188,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({
     emailVarificationToken: hashedToken,
-    emailVarificationExpiry: { $gt: Date.now() },
+    emailVarificationExpiry: { $gt: Date.now() },//Checks if the Verification window is still open or not (20 min) 
   });
 
   if (!user) {
@@ -193,6 +205,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, { isEmailVarified: true }, "Email is varified"));
 });
+
+//Get
 const resendEmailVarification = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id);
   if (!user) {
@@ -222,6 +236,7 @@ const resendEmailVarification = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Mail has been sent to your email id"));
 });
+
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -273,6 +288,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Unauthorized Access");
   }
 });
+
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -286,7 +302,6 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 
   user.forgotPasswordToken = hashedToken;
   user.forgotPasswordExpiry = tokenExpiry;
-  console.log(unHashedToken)
   await user.save({ validateBeforeSave: false });
 
   await sendEmail({
@@ -297,6 +312,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
       `${process.env.FORGOT_PASSWORD_URL}/${unHashedToken}`,
     ),
   });
+
   return res
     .status(200)
     .json(
@@ -307,6 +323,8 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+//Post
 const resetForgotPassword = asyncHandler(async (req, res) => {
   const { resetToken } = req.params;
   const { newPassword } = req.body;
@@ -333,6 +351,8 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Password Reset Successfully"));
 });
+
+//Post
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user._id);
